@@ -27,7 +27,11 @@ public class SamlProfile {
     @Column(nullable = false)
     private String acsUrl;
 
-    private String audience;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "saml_profile_audiences", joinColumns = @JoinColumn(name = "profile_id"))
+    @Column(name = "audience")
+    @OrderColumn
+    private List<String> audiences = new ArrayList<>();
 
     // User / Subject Settings
     private String nameId;
@@ -128,12 +132,12 @@ public class SamlProfile {
         this.acsUrl = acsUrl;
     }
 
-    public String getAudience() {
-        return audience;
+    public List<String> getAudiences() {
+        return audiences;
     }
 
-    public void setAudience(String audience) {
-        this.audience = audience;
+    public void setAudiences(List<String> audiences) {
+        this.audiences = audiences;
     }
 
     public String getNameId() {

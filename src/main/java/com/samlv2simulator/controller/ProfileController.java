@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @Controller
 @RequestMapping("/profiles")
@@ -45,12 +46,14 @@ public class ProfileController {
     @PostMapping
     public String create(@ModelAttribute SamlProfile profile,
                          @RequestParam(value = "keystoreUpload", required = false) MultipartFile keystoreFile,
+                         @RequestParam(value = "audiences", required = false) String[] audiences,
                          @RequestParam(value = "attrNames", required = false) String[] attrNames,
                          @RequestParam(value = "attrValues", required = false) String[] attrValues,
                          @RequestParam(value = "attrFormats", required = false) String[] attrFormats,
                          RedirectAttributes redirectAttributes) {
         try {
             handleKeystoreUpload(profile, keystoreFile);
+            handleAudiences(profile, audiences);
             handleAttributes(profile, attrNames, attrValues, attrFormats);
             profileRepository.save(profile);
             redirectAttributes.addFlashAttribute("success", "Profile created successfully");
@@ -73,6 +76,7 @@ public class ProfileController {
     public String update(@PathVariable Long id,
                          @ModelAttribute SamlProfile profile,
                          @RequestParam(value = "keystoreUpload", required = false) MultipartFile keystoreFile,
+                         @RequestParam(value = "audiences", required = false) String[] audiences,
                          @RequestParam(value = "attrNames", required = false) String[] attrNames,
                          @RequestParam(value = "attrValues", required = false) String[] attrValues,
                          @RequestParam(value = "attrFormats", required = false) String[] attrFormats,
@@ -83,6 +87,8 @@ public class ProfileController {
 
             copyProfileFields(profile, existing);
             handleKeystoreUpload(existing, keystoreFile);
+            existing.getAudiences().clear();
+            handleAudiences(existing, audiences);
             existing.getAttributes().clear();
             handleAttributes(existing, attrNames, attrValues, attrFormats);
             profileRepository.save(existing);
@@ -137,6 +143,15 @@ public class ProfileController {
         }
     }
 
+    private void handleAudiences(SamlProfile profile, String[] audiences) {
+        if (audiences == null) return;
+        for (String aud : audiences) {
+            if (aud != null && !aud.isBlank()) {
+                profile.getAudiences().add(aud.trim());
+            }
+        }
+    }
+
     private void handleAttributes(SamlProfile profile, String[] names, String[] values, String[] formats) {
         if (names == null) return;
         for (int i = 0; i < names.length; i++) {
@@ -156,7 +171,7 @@ public class ProfileController {
         to.setIdpEntityId(from.getIdpEntityId());
         to.setSpEntityId(from.getSpEntityId());
         to.setAcsUrl(from.getAcsUrl());
-        to.setAudience(from.getAudience());
+        to.setAudiences(new ArrayList<>(from.getAudiences()));
         to.setNameId(from.getNameId());
         to.setNameIdFormat(from.getNameIdFormat());
         to.setSessionIndex(from.getSessionIndex());
