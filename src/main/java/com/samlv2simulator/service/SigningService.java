@@ -21,6 +21,10 @@ public class SigningService {
 
         String referenceId = elementToSign.getAttribute("ID");
 
+        // Register the ID attribute so the XML signature URI reference resolver
+        // can find the element via Document.getElementById()
+        elementToSign.setIdAttributeNS(null, "ID", true);
+
         XMLSignature sig = new XMLSignature(doc, "", sigAlgoUri,
                 org.apache.xml.security.c14n.Canonicalizer.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
 
