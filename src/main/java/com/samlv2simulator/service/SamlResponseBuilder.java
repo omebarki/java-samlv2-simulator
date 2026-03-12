@@ -174,13 +174,15 @@ public class SamlResponseBuilder {
                 ISO_FORMATTER.format(now.plusSeconds(profile.getNotOnOrAfterMinutes() * 60L)));
 
         Element audienceRestriction = doc.createElementNS(SAML_NS, "saml:AudienceRestriction");
-        Element audience = doc.createElementNS(SAML_NS, "saml:Audience");
-        String audienceValue = profile.getAudience();
-        if (audienceValue == null || audienceValue.isBlank()) {
-            audienceValue = profile.getSpEntityId();
+        java.util.List<String> audiences = profile.getAudiences();
+        if (audiences == null || audiences.isEmpty()) {
+            audiences = java.util.List.of(profile.getSpEntityId());
         }
-        audience.setTextContent(audienceValue);
-        audienceRestriction.appendChild(audience);
+        for (String audienceValue : audiences) {
+            Element audience = doc.createElementNS(SAML_NS, "saml:Audience");
+            audience.setTextContent(audienceValue);
+            audienceRestriction.appendChild(audience);
+        }
         conditions.appendChild(audienceRestriction);
 
         return conditions;
