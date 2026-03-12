@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Profiles</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="bi bi-gear"></i> Configuration Profiles</h2>
+        <a th:href="@{/profiles/new}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> New Profile
+        </a>
+    </div>
+
+    <!-- Flash messages -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div th:if="${#lists.isEmpty(profiles)}" class="alert alert-info">
+        No profiles configured yet. Click "New Profile" to create one.
+    </div>
+
+    <div class="table-responsive" th:unless="${#lists.isEmpty(profiles)}">
+        <table class="table table-hover">
+            <thead class="table-dark">
+            <tr>
+                <th>Profile Name</th>
+                <th>IdP Entity ID</th>
+                <th>SP Entity ID</th>
+                <th>ACS URL</th>
+                <th>NameID</th>
+                <th>Signing</th>
+                <th>Updated</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="profile : ${profiles}">
+                <td><strong th:text="${profile.profileName}"></strong></td>
+                <td><code><small th:text="${profile.idpEntityId}"></small></code></td>
+                <td><code><small th:text="${profile.spEntityId}"></small></code></td>
+                <td><small th:text="${profile.acsUrl}"></small></td>
+                <td th:text="${profile.nameId}"></td>
+                <td>
+                    <span th:if="${profile.signResponse}" class="badge bg-success">Resp</span>
+                    <span th:if="${profile.signAssertion}" class="badge bg-primary">Assert</span>
+                </td>
+                <td><small th:text="${profile.updatedAt}"></small></td>
+                <td class="text-nowrap">
+                    <a th:href="@{/sso/idp-init/{id}(id=${profile.id})}"
+                       class="btn btn-sm btn-success" title="Send IdP-Initiated SSO">
+                        <i class="bi bi-send"></i>
+                    </a>
+                    <a th:href="@{/profiles/{id}/edit(id=${profile.id})}"
+                       class="btn btn-sm btn-outline-primary" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <a th:href="@{/profiles/{id}/clone(id=${profile.id})}"
+                       class="btn btn-sm btn-outline-secondary" title="Clone">
+                        <i class="bi bi-copy"></i>
+                    </a>
+                    <form th:action="@{/profiles/{id}(id=${profile.id})}" method="post"
+                          style="display:inline"
+                          onsubmit="return confirm('Delete this profile?')">
+                        <input type="hidden" name="_method" value="DELETE"/>
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

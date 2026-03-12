@@ -128,7 +128,8 @@ The web interface (Thymeleaf server-rendered) provides the following pages and c
 | Framework | Spring Boot 3.x |
 | Build tool | Maven |
 | Frontend | Thymeleaf + Bootstrap 5 |
-| SAML library | OpenSAML 5.x |
+| SAML library | Standard Java XML DOM + Apache Santuario (XML Digital Signatures) |
+| PEM/Key parsing | Bouncy Castle |
 | XML editor | CodeMirror (via CDN or webjars) |
 | Database | H2 (embedded, file-based) |
 | Key management | Java KeyStore API (PEM, JKS, PKCS#12) |
