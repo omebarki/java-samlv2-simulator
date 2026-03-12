@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>AuthnRequest Received</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h2><i class="bi bi-inbox"></i> Incoming AuthnRequest (SP-Initiated SSO)</h2>
+    <hr/>
+
+    <div th:if="${error}" class="alert alert-danger">
+        <span th:text="${error}"></span>
+    </div>
+
+    <div th:if="${parsedRequest != null}">
+        <!-- Parsed details -->
+        <div class="card mb-3">
+            <div class="card-header"><h5 class="mb-0">AuthnRequest Details</h5></div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                    <tr th:each="entry : ${requestDetails}">
+                        <th class="w-25" th:text="${entry.key}"></th>
+                        <td><code th:text="${entry.value}"></code></td>
+                    </tr>
+                    <tr th:if="${relayState}">
+                        <th>RelayState</th>
+                        <td><code th:text="${relayState}"></code></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Raw XML -->
+        <div class="card mb-3">
+            <div class="card-header"><h5 class="mb-0"><i class="bi bi-code-slash"></i> Raw AuthnRequest XML</h5></div>
+            <div class="card-body p-0">
+                <div id="requestXmlEditor"></div>
+            </div>
+        </div>
+
+        <!-- Respond form -->
+        <div class="card mb-3">
+            <div class="card-header"><h5 class="mb-0"><i class="bi bi-reply"></i> Send Response</h5></div>
+            <div class="card-body">
+                <form th:action="@{/sso/respond-to-authn}" method="post">
+                    <input type="hidden" name="inResponseTo" th:value="${parsedRequest.id}"/>
+                    <input type="hidden" name="relayState" th:value="${relayState}"/>
+
+                    <div class="mb-3">
+                        <label class="form-label">Select a Profile to respond with:</label>
+                        <select class="form-select" name="profileId" required>
+                            <option value="">-- Select Profile --</option>
+                            <option th:each="p : ${profiles}" th:value="${p.id}" th:text="${p.profileName}"></option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-send"></i> Build &amp; Review Response
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div layout:fragment="scripts">
+<script th:if="${rawXml != null}" th:inline="javascript">
+    var rawXml = /*[[${rawXml}]]*/ '';
+    CodeMirror(document.getElementById('requestXmlEditor'), {
+        value: rawXml,
+        mode: 'xml',
+        theme: 'dracula',
+        lineNumbers: true,
+        readOnly: true,
+        lineWrapping: true,
+        viewportMargin: Infinity
+    }).setSize(null, 300);
+</script>
+</div>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Send SAML Response</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h2>
+        <i class="bi bi-send"></i> Send SAML Response
+        <span class="badge bg-info" th:text="${flowType}"></span>
+    </h2>
+    <hr/>
+
+    <div th:if="${error}" class="alert alert-danger">
+        <span th:text="${error}"></span>
+    </div>
+
+    <!-- Summary -->
+    <div class="card mb-3" th:if="${profile != null}">
+        <div class="card-header"><h5 class="mb-0">Response Summary</h5></div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3"><strong>Profile:</strong> <span th:text="${profile.profileName}"></span></div>
+                <div class="col-md-3"><strong>ACS URL:</strong> <small th:text="${acsUrl}"></small></div>
+                <div class="col-md-3"><strong>NameID:</strong> <span th:text="${profile.nameId}"></span></div>
+                <div class="col-md-3"><strong>RelayState:</strong> <span th:text="${relayState ?: 'none'}"></span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Send form -->
+    <form th:action="@{/sso/send}" method="post" id="sendForm">
+        <input type="hidden" name="profileId" th:value="${profile?.id}"/>
+        <input type="hidden" name="flowType" th:value="${flowType}"/>
+        <input type="hidden" name="inResponseTo" th:value="${inResponseTo}"/>
+
+        <!-- ACS URL (editable) -->
+        <div class="row mb-3">
+            <div class="col-md-8">
+                <label class="form-label">ACS URL (Destination)</label>
+                <input type="url" class="form-control" name="acsUrl" th:value="${acsUrl}" required/>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">RelayState</label>
+                <input type="text" class="form-control" name="relayState" th:value="${relayState}"/>
+            </div>
+        </div>
+
+        <!-- XML Editor -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-code-slash"></i> SAML Response XML</h5>
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetXml()">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reset to Generated
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <textarea id="xmlEditor" name="samlResponseXml" th:text="${samlResponseXml}" style="display:none"></textarea>
+                <div id="codeMirrorEditor"></div>
+            </div>
+        </div>
+
+        <!-- Base64 preview -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-file-binary"></i> Base64-Encoded Value</h5>
+            </div>
+            <div class="card-body">
+                <textarea id="base64Preview" class="form-control font-monospace" rows="4" readonly
+                          th:text="${samlResponseBase64}"></textarea>
+            </div>
+        </div>
+
+        <!-- Send button -->
+        <div class="d-flex gap-2 mb-4">
+            <button type="submit" class="btn btn-success btn-lg">
+                <i class="bi bi-send-fill"></i> Send SAML Response to ACS
+            </button>
+            <a th:href="@{/}" class="btn btn-secondary">Cancel</a>
+            <button type="button" th:if="${profile != null}" class="btn btn-outline-primary"
+                    onclick="regenerate()">
+                <i class="bi bi-arrow-repeat"></i> Regenerate XML
+            </button>
+        </div>
+    </form>
+
+    <!-- Hidden regenerate form -->
+    <form th:action="@{/sso/regenerate}" method="post" id="regenerateForm" style="display:none"
+          th:if="${profile != null}">
+        <input type="hidden" name="profileId" th:value="${profile.id}"/>
+        <input type="hidden" name="inResponseTo" th:value="${inResponseTo}"/>
+        <input type="hidden" name="flowType" th:value="${flowType}"/>
+    </form>
+</div>
+
+<div layout:fragment="scripts">
+<script>
+    var originalXml = document.getElementById('xmlEditor').value;
+    var cm = CodeMirror(document.getElementById('codeMirrorEditor'), {
+        value: originalXml,
+        mode: 'xml',
+        theme: 'dracula',
+        lineNumbers: true,
+        lineWrapping: true,
+        viewportMargin: Infinity
+    });
+
+    cm.setSize(null, 400);
+
+    cm.on('change', function() {
+        document.getElementById('xmlEditor').value = cm.getValue();
+        updateBase64();
+    });
+
+    function updateBase64() {
+        var xml = cm.getValue();
+        document.getElementById('base64Preview').value = btoa(unescape(encodeURIComponent(xml)));
+    }
+
+    function resetXml() {
+        cm.setValue(originalXml);
+        updateBase64();
+    }
+
+    function regenerate() {
+        document.getElementById('regenerateForm').submit();
+    }
+
+    // Sync before submit
+    document.getElementById('sendForm').addEventListener('submit', function() {
+        document.getElementById('xmlEditor').value = cm.getValue();
+    });
+</script>
+</div>
+</body>
+</html>

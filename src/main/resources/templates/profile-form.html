@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Profile</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h2>
+        <i class="bi bi-gear"></i>
+        <span th:if="${isNew}">New Profile</span>
+        <span th:unless="${isNew}">Edit Profile</span>
+    </h2>
+    <hr/>
+
+    <form th:action="${isNew} ? @{/profiles} : @{/profiles/{id}(id=${profile.id})}"
+          method="post" enctype="multipart/form-data">
+        <input th:unless="${isNew}" type="hidden" name="_method" value="PUT"/>
+
+        <!-- IdP Settings -->
+        <div class="card mb-3">
+            <div class="card-header"><h5 class="mb-0"><i class="bi bi-building"></i> Identity Provider Settings</h5></div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Profile Name *</label>
+                        <input type="text" class="form-control" name="profileName"
+                               th:value="${profile.profileName}" required/>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">IdP Entity ID (Issuer) *</label>
+                        <input type="text" class="form-control" name="idpEntityId"
+                               th:value="${profile.idpEntityId}" required/>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SP Settings -->
+        <div class="card mb-3">
+            <div class="card-header"><h5 class="mb-0"><i class="bi bi-box-arrow-right"></i> Service Provider (Federating IdP) Settings</h5></div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">SP Entity ID *</label>
+                        <input type="text" class="form-control" name="spEntityId"
+                               th:value="${profile.spEntityId}" required/>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">ACS URL *</label>
+                        <input type="url" class="form-control" name="acsUrl"
+                               th:value="${profile.acsUrl}" required/>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Audience</label>
+                        <input type="text" class="form-control" name="audience"
+                               th:value="${profile.audience}"
+                               placeholder="Defaults to SP Entity ID"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subject Settings -->
+        <div class="card mb-3">
+            <div class="card-header"><h5 class="mb-0"><i class="bi bi-person"></i> User / Subject Settings</h5></div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">NameID *</label>
+                        <input type="text" class="form-control" name="nameId"
+                               th:value="${profile.nameId}" required
+                               placeholder="user@example.com"/>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">NameID Format</label>
+                        <select class="form-select" name="nameIdFormat">
+                            <option value="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+                                    th:selected="${profile.nameIdFormat == 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress'}">Email Address</option>
+                            <option value="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"
+                                    th:selected="${profile.nameIdFormat == 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified'}">Unspecified</option>
+                            <option value="urn:oasis:names:tc:SAML:2.0:nameid-format:persistent"
+                                    th:selected="${profile.nameIdFormat == 'urn:oasis:names:tc:SAML:2.0:nameid-format:persistent'}">Persistent</option>
+                            <option value="urn:oasis:names:tc:SAML:2.0:nameid-format:transient"
+                                    th:selected="${profile.nameIdFormat == 'urn:oasis:names:tc:SAML:2.0:nameid-format:transient'}">Transient</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Session Index</label>
+                        <input type="text" class="form-control" name="sessionIndex"
+                               th:value="${profile.sessionIndex}"
+                               placeholder="Auto-generated if empty"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assertion Timing -->
+        <div class="card mb-3">
+            <div class="card-header"><h5 class="mb-0"><i class="bi bi-clock"></i> Assertion Timing</h5></div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">NotBefore (minutes before now)</label>
+                        <input type="number" class="form-control" name="notBeforeMinutes"
+                               th:value="${profile.notBeforeMinutes}" min="0"/>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">NotOnOrAfter (minutes after now)</label>
+                        <input type="number" class="form-control" name="notOnOrAfterMinutes"
+                               th:value="${profile.notOnOrAfterMinutes}" min="1"/>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Session NotOnOrAfter (hours)</label>
+                        <input type="number" class="form-control" name="sessionNotOnOrAfterHours"
+                               th:value="${profile.sessionNotOnOrAfterHours}" min="1"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Signing Settings -->
+        <div class="card mb-3">
+            <div class="card-header"><h5 class="mb-0"><i class="bi bi-key"></i> Signing &amp; Key Settings</h5></div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="signResponse"
+                                   th:checked="${profile.signResponse}"/>
+                            <label class="form-check-label">Sign Response</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="signAssertion"
+                                   th:checked="${profile.signAssertion}"/>
+                            <label class="form-check-label">Sign Assertion</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Signature Algorithm</label>
+                        <select class="form-select" name="signatureAlgorithm">
+                            <option value="RSA_SHA256" th:selected="${profile.signatureAlgorithm == 'RSA_SHA256'}">RSA-SHA256</option>
+                            <option value="RSA_SHA1" th:selected="${profile.signatureAlgorithm == 'RSA_SHA1'}">RSA-SHA1</option>
+                            <option value="RSA_SHA512" th:selected="${profile.signatureAlgorithm == 'RSA_SHA512'}">RSA-SHA512</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Digest Algorithm</label>
+                        <select class="form-select" name="digestAlgorithm">
+                            <option value="SHA256" th:selected="${profile.digestAlgorithm == 'SHA256'}">SHA-256</option>
+                            <option value="SHA1" th:selected="${profile.digestAlgorithm == 'SHA1'}">SHA-1</option>
+                            <option value="SHA512" th:selected="${profile.digestAlgorithm == 'SHA512'}">SHA-512</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Key Format</label>
+                        <select class="form-select" name="keyFormat" id="keyFormat" onchange="toggleKeyFields()">
+                            <option value="PEM" th:selected="${profile.keyFormat == 'PEM'}">PEM</option>
+                            <option value="JKS" th:selected="${profile.keyFormat == 'JKS'}">JKS</option>
+                            <option value="PKCS12" th:selected="${profile.keyFormat == 'PKCS12'}">PKCS#12</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="button" class="btn btn-outline-info d-block" onclick="generateKeyPair()">
+                            <i class="bi bi-magic"></i> Generate Self-Signed Keypair
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PEM fields -->
+                <div id="pemFields">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Private Key (PEM)</label>
+                            <textarea class="form-control font-monospace" name="signingPrivateKey"
+                                      rows="6" th:text="${profile.signingPrivateKey}"
+                                      placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"></textarea>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Certificate (PEM)</label>
+                            <textarea class="form-control font-monospace" name="signingCertificate"
+                                      rows="6" th:text="${profile.signingCertificate}"
+                                      placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Keystore fields -->
+                <div id="keystoreFields" style="display:none">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Keystore File</label>
+                            <input type="file" class="form-control" name="keystoreUpload"/>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Keystore Password</label>
+                            <input type="password" class="form-control" name="keystorePassword"
+                                   th:value="${profile.keystorePassword}"/>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Key Alias</label>
+                            <input type="text" class="form-control" name="keyAlias"
+                                   th:value="${profile.keyAlias}" placeholder="First alias if empty"/>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Key Password</label>
+                            <input type="password" class="form-control" name="keyPassword"
+                                   th:value="${profile.keyPassword}" placeholder="Same as keystore if empty"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RelayState -->
+        <div class="card mb-3">
+            <div class="card-header"><h5 class="mb-0"><i class="bi bi-link-45deg"></i> RelayState</h5></div>
+            <div class="card-body">
+                <input type="text" class="form-control" name="relayState"
+                       th:value="${profile.relayState}" placeholder="Optional RelayState value"/>
+            </div>
+        </div>
+
+        <!-- SAML Attributes -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-tags"></i> SAML Attributes</h5>
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addPresetAttributes()">
+                        <i class="bi bi-lightning"></i> Add Presets
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addAttributeRow()">
+                        <i class="bi bi-plus"></i> Add Attribute
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="attributeContainer">
+                    <div th:each="attr, iterStat : ${profile.attributes}" class="row mb-2 attribute-row">
+                        <div class="col-md-4">
+                            <input type="text" class="form-control form-control-sm" name="attrNames"
+                                   th:value="${attr.attributeName}" placeholder="Attribute Name"/>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control form-control-sm" name="attrValues"
+                                   th:value="${attr.attributeValue}" placeholder="Value (semicolon for multi-value)"/>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="text" class="form-control form-control-sm" name="attrFormats"
+                                   th:value="${attr.nameFormat}" placeholder="Name Format"/>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.attribute-row').remove()">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="d-flex gap-2 mb-4">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-lg"></i>
+                <span th:if="${isNew}">Create Profile</span>
+                <span th:unless="${isNew}">Update Profile</span>
+            </button>
+            <a th:href="@{/profiles}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<div layout:fragment="scripts">
+<script th:inline="javascript">
+    function toggleKeyFields() {
+        var format = document.getElementById('keyFormat').value;
+        document.getElementById('pemFields').style.display = format === 'PEM' ? '' : 'none';
+        document.getElementById('keystoreFields').style.display = format !== 'PEM' ? '' : 'none';
+    }
+
+    function addAttributeRow() {
+        var container = document.getElementById('attributeContainer');
+        var row = document.createElement('div');
+        row.className = 'row mb-2 attribute-row';
+        row.innerHTML =
+            '<div class="col-md-4"><input type="text" class="form-control form-control-sm" name="attrNames" placeholder="Attribute Name"/></div>' +
+            '<div class="col-md-4"><input type="text" class="form-control form-control-sm" name="attrValues" placeholder="Value (semicolon for multi-value)"/></div>' +
+            '<div class="col-md-3"><input type="text" class="form-control form-control-sm" name="attrFormats" value="urn:oasis:names:tc:SAML:2.0:attrname-format:basic" placeholder="Name Format"/></div>' +
+            '<div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest(\'.attribute-row\').remove()"><i class="bi bi-x"></i></button></div>';
+        container.appendChild(row);
+    }
+
+    function addPresetAttributes() {
+        var presets = [
+            { name: 'email', value: '' },
+            { name: 'givenName', value: '' },
+            { name: 'surname', value: '' },
+            { name: 'groups', value: '' }
+        ];
+        presets.forEach(function(p) {
+            var container = document.getElementById('attributeContainer');
+            var row = document.createElement('div');
+            row.className = 'row mb-2 attribute-row';
+            row.innerHTML =
+                '<div class="col-md-4"><input type="text" class="form-control form-control-sm" name="attrNames" value="' + p.name + '"/></div>' +
+                '<div class="col-md-4"><input type="text" class="form-control form-control-sm" name="attrValues" value="' + p.value + '" placeholder="Enter value"/></div>' +
+                '<div class="col-md-3"><input type="text" class="form-control form-control-sm" name="attrFormats" value="urn:oasis:names:tc:SAML:2.0:attrname-format:basic"/></div>' +
+                '<div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest(\'.attribute-row\').remove()"><i class="bi bi-x"></i></button></div>';
+            container.appendChild(row);
+        });
+    }
+
+    function generateKeyPair() {
+        fetch('/profiles/generate-keypair', { method: 'POST' })
+            .then(function(resp) { return resp.json(); })
+            .then(function(data) {
+                document.querySelector('textarea[name="signingPrivateKey"]').value = data.privateKey;
+                document.querySelector('textarea[name="signingCertificate"]').value = data.certificate;
+                document.getElementById('keyFormat').value = 'PEM';
+                toggleKeyFields();
+            })
+            .catch(function(err) { alert('Error generating keypair: ' + err); });
+    }
+
+    // Initialize on load
+    toggleKeyFields();
+</script>
+</div>
+</body>
+</html>

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Sending SAML Response...</title>
+</head>
+<body onload="document.getElementById('samlForm').submit();">
+    <h3>Sending SAML Response to ACS...</h3>
+    <p>If you are not redirected automatically, click the button below.</p>
+    <form id="samlForm" th:action="${acsUrl}" method="post">
+        <input type="hidden" name="SAMLResponse" th:value="${samlResponseBase64}"/>
+        <input th:if="${relayState != null and !relayState.isEmpty()}"
+               type="hidden" name="RelayState" th:value="${relayState}"/>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</body>
+</html>
